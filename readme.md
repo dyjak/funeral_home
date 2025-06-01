@@ -1,5 +1,6 @@
 # Zakład pogrzebowy
-
+frontend app- https://funeralhomev2.netlify.app/
+backend app-https://springboot-backend-hnmc.onrender.com
 ## Baza danych
 
 Schemat bazy danych:  

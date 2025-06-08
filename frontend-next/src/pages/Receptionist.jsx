@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import ReceptionForms from '../components/reception/ReceptionForms';
+import OrdersList from '../components/reception/OrdersList';
 
 const Receptionist = () => {
   const [formData, setFormData] = useState({
@@ -20,6 +22,7 @@ const Receptionist = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [orders, setOrders] = useState([]); // Add orders state
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -43,6 +46,33 @@ const Receptionist = () => {
 
     fetchCurrentUser();
   }, []);
+
+  // First, extract fetchOrders to a separate function at the top level of the component
+  const fetchOrders = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      const response = await fetch('http://localhost:8080/orders', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch orders');
+      const data = await response.json();
+      setOrders(data);
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+      setError('Failed to fetch orders');
+    }
+  };
+
+  // Use the extracted function in useEffect
+  useEffect(() => {
+    fetchOrders();
+  }, []); // Empty dependency array means this runs once on mount
 
   const handleClientChange = (e) => {
     const { name, value } = e.target;
@@ -131,6 +161,10 @@ const Receptionist = () => {
           deathCertificateNumber: ''
         }
       });
+
+      // Refresh orders list
+      await fetchOrders();
+
     } catch (err) {
       setError(err.message);
     } finally {
@@ -138,148 +172,52 @@ const Receptionist = () => {
     }
   };
 
+  // Generate report function
+  const generateOrderReport = async (orderId) => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:8080/reports/orders/${orderId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to generate report');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      window.open(url);
+    } catch (err) {
+      console.error('Error generating report:', err);
+      setError('Failed to generate report');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 bg-gray-900 text-gray-100">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {error && (
-          <div className="p-4 bg-red-900 text-red-100 rounded-lg">
-            {error}
-          </div>
-        )}
-        {success && (
-          <div className="p-4 bg-green-900 text-green-100 rounded-lg">
-            {success}
-          </div>
-        )}
+      <h1 className="text-3xl font-bold mb-8">Panel recepcji</h1>
+      
+      <ReceptionForms 
+        currentUser={currentUser}
+        formData={formData}
+        handleClientChange={handleClientChange}
+        handleDeceasedChange={handleDeceasedChange}
+        handleSubmit={handleSubmit}
+        loading={loading}
+        error={error}
+        success={success}
+      />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Client Data Section */}
-          <div className="bg-gray-800 p-6 rounded-lg">
-            <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-700">
-              Dane klienta
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-gray-400 mb-1 text-sm">Imię</label>
-                <input
-                  type="text"
-                  name="firstName"
-                  value={formData.client.firstName}
-                  onChange={handleClientChange}
-                  className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-gray-200"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-gray-400 mb-1 text-sm">Nazwisko</label>
-                <input
-                  type="text"
-                  name="lastName"
-                  value={formData.client.lastName}
-                  onChange={handleClientChange}
-                  className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-gray-200"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-gray-400 mb-1 text-sm">Telefon</label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.client.phone}
-                  onChange={handleClientChange}
-                  className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-gray-200"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-gray-400 mb-1 text-sm">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.client.email}
-                  onChange={handleClientChange}
-                  className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-gray-200"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Deceased Data Section */}
-          <div className="bg-gray-800 p-6 rounded-lg">
-            <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-700">
-              Dane osoby zmarłej
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-gray-400 mb-1 text-sm">Imię</label>
-                <input
-                  type="text"
-                  name="firstName"
-                  value={formData.deceased.firstName}
-                  onChange={handleDeceasedChange}
-                  className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-gray-200"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-gray-400 mb-1 text-sm">Nazwisko</label>
-                <input
-                  type="text"
-                  name="lastName"
-                  value={formData.deceased.lastName}
-                  onChange={handleDeceasedChange}
-                  className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-gray-200"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-gray-400 mb-1 text-sm">Data urodzenia</label>
-                <input
-                  type="date"
-                  name="birthDate"
-                  value={formData.deceased.birthDate}
-                  onChange={handleDeceasedChange}
-                  className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-gray-200"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-gray-400 mb-1 text-sm">Data zgonu</label>
-                <input
-                  type="date"
-                  name="deathDate"
-                  value={formData.deceased.deathDate}
-                  onChange={handleDeceasedChange}
-                  className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-gray-200"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-gray-400 mb-1 text-sm">Numer aktu zgonu</label>
-                <input
-                  type="text"
-                  name="deathCertificateNumber"
-                  value={formData.deceased.deathCertificateNumber}
-                  onChange={handleDeceasedChange}
-                  className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-gray-200"
-                  required
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-end mt-6">
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-700 hover:bg-blue-600 text-white px-6 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Przetwarzanie...' : 'Utwórz zlecenie'}
-          </button>
-        </div>
-      </form>
+      <OrdersList 
+        orders={orders}
+        generateReport={generateOrderReport}
+        loading={loading}
+      />
     </div>
   );
 };

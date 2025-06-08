@@ -105,44 +105,84 @@ public class TaskService implements ITaskService {
 
     @Override
     @Transactional
-    public Task update(Long id, Task task) {
-        return taskRepository.findById(id)
-            .map(existingTask -> {
-                existingTask.setTaskName(task.getTaskName());
-                existingTask.setDescription(task.getDescription());
-                existingTask.setDueDate(task.getDueDate());
-                existingTask.setPriority(task.getPriority());
-                existingTask.setStatus(task.getStatus());
-                
-                // Handle order update
-                if (task.getOrder() != null && task.getOrder().getId() != null) {
-                    Order order = orderRepository.findById(task.getOrder().getId())
+    public Task update(Long id, Task updatedTask) {
+        try {
+            Task existingTask = taskRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Task not found with id: " + id));
+
+            System.out.println("Existing task before update: " + existingTask);
+            System.out.println("Update request data: " + updatedTask);
+
+            // Update fields only if they are present in the request
+            if (updatedTask.getTaskName() != null) {
+                existingTask.setTaskName(updatedTask.getTaskName());
+            }
+            if (updatedTask.getDescription() != null) {
+                existingTask.setDescription(updatedTask.getDescription());
+            }
+            if (updatedTask.getDueDate() != null) {
+                existingTask.setDueDate(updatedTask.getDueDate());
+            }
+            if (updatedTask.getPriority() != null) {
+                existingTask.setPriority(updatedTask.getPriority());
+            }
+            if (updatedTask.getStatus() != null) {
+                existingTask.setStatus(updatedTask.getStatus());
+            }
+
+            // Handle order relationship
+            if (updatedTask.getOrder() != null) {
+                if (updatedTask.getOrder().getId() != null) {
+                    Order order = orderRepository.findById(updatedTask.getOrder().getId())
                         .orElseThrow(() -> new RuntimeException("Order not found"));
                     existingTask.setOrder(order);
                 } else {
                     existingTask.setOrder(null);
                 }
+            }
 
-                // Handle user assignment update
-                if (task.getAssignedUser() != null && task.getAssignedUser().getId() != null) {
-                    User user = userRepository.findById(task.getAssignedUser().getId())
-                        .orElseThrow(() -> new RuntimeException("User not found"));
-                    existingTask.setAssignedUser(user);
-                    
-                    taskAssignmentRepository.deleteAllByTaskId(existingTask.getId());
-                    TaskAssignment assignment = new TaskAssignment();
-                    assignment.setTask(existingTask);
-                    assignment.setUser(user);
-                    assignment.setAssignedAt(LocalDateTime.now());
-                    taskAssignmentRepository.save(assignment);
-                } else {
-                    existingTask.setAssignedUser(null);
-                    taskAssignmentRepository.deleteAllByTaskId(existingTask.getId());
-                }
+            // Handle user assignment
+            if (updatedTask.getAssignedUser() != null) {
+                handleUserAssignment(existingTask, updatedTask.getAssignedUser());
+            }
+
+            Task savedTask = taskRepository.save(existingTask);
+            System.out.println("Task after update: " + savedTask);
+            return savedTask;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to update task: " + e.getMessage(), e);
+        }
+    }
+
+    // Helper method to handle user assignment logic
+    private void handleUserAssignment(Task existingTask, User newUser) {
+        try {
+            if (newUser.getId() != null) {
+                User user = userRepository.findById(newUser.getId())
+                    .orElseThrow(() -> new RuntimeException("User not found with id: " + newUser.getId()));
                 
-                return taskRepository.save(existingTask);
-            })
-            .orElseThrow(() -> new RuntimeException("Task not found"));
+                // Update user assignment
+                existingTask.setAssignedUser(user);
+                
+                // Update task assignment record
+                taskAssignmentRepository.deleteAllByTaskId(existingTask.getId());
+                TaskAssignment assignment = new TaskAssignment();
+                assignment.setTask(existingTask);
+                assignment.setUser(user);
+                assignment.setAssignedAt(LocalDateTime.now());
+                taskAssignmentRepository.save(assignment);
+                
+                System.out.println("Updated user assignment: " + user.getId());
+            } else {
+                // Remove user assignment
+                existingTask.setAssignedUser(null);
+                taskAssignmentRepository.deleteAllByTaskId(existingTask.getId());
+                System.out.println("Removed user assignment");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error handling user assignment: " + e.getMessage(), e);
+        }
     }
 
     @Override

@@ -1,9 +1,10 @@
 // Navigation.jsx
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 const Navigation = ({ token, handleLogout, userRole }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [currentRole, setCurrentRole] = useState(null);
 
@@ -25,7 +26,6 @@ const Navigation = ({ token, handleLogout, userRole }) => {
         if (!response.ok) throw new Error('Failed to fetch user data');
         
         const userData = await response.json();
-        console.log('Navigation - Fetched role:', userData.role); // Debug log
         setCurrentRole(userData.role);
       } catch (err) {
         console.error('Error fetching user role:', err);
@@ -37,13 +37,17 @@ const Navigation = ({ token, handleLogout, userRole }) => {
     fetchUserRole();
   }, [token]);
 
-  console.log('Navigation - Props userRole:', userRole); // Debug log
-  console.log('Navigation - Current role:', currentRole); // Debug log
-
   const handleLogoutClick = () => {
     handleLogout();
     navigate("/log");
   };
+
+  const linkClass = (path) =>
+    `no-underline font-medium transition-colors ${
+      location.pathname === path
+        ? "text-white border-b-2 border-purple-400"
+        : "text-purple-400 hover:text-purple-300"
+    }`;
 
   if (loading) {
     return <div>Loading navigation...</div>;
@@ -51,43 +55,34 @@ const Navigation = ({ token, handleLogout, userRole }) => {
 
   return (
     <nav className="flex gap-4 p-5 bg-gray-800 border-b border-gray-700 justify-center items-center">
-      <Link className="text-purple-400 hover:text-purple-300 transition-colors no-underline font-medium" to="/">
-        🏠 Home
-      </Link>
+      <Link className={linkClass("/")} to="/">🏠 O projekcie</Link>
+
       {token && (
         <>
-          <Link className="text-purple-400 hover:text-purple-300 transition-colors no-underline font-medium" to="/profile">
-            👤 Profile
-          </Link>
-          <Link className="text-purple-400 hover:text-purple-300 transition-colors no-underline font-medium" to="/tasks">
-            📋 Zadania
-          </Link>
-          <Link className="text-purple-400 hover:text-purple-300 transition-colors no-underline font-medium" to="/recepcionist">
-            📋 Recepcja
-          </Link>
+          <Link className={linkClass("/profile")} to="/profile">👤 Profile</Link>
+          <Link className={linkClass("/tasks")} to="/tasks">📋 Zadania</Link>
+          <Link className={linkClass("/recepcionist")} to="/recepcionist">📋 Recepcja</Link>
         </>
       )}
+
       {token && currentRole === 'ADMIN' && (
         <>
-          <Link className="text-purple-400 hover:text-purple-300 transition-colors no-underline font-medium" to="/admin">
-            ⚙️ Admin Panel
-          </Link>
-          <Link className="text-purple-400 hover:text-purple-300 transition-colors no-underline font-medium" to="/raports">
-            📊 Raporty
-          </Link>
+          <Link className={linkClass("/admin")} to="/admin">⚙️ Panel admina</Link>
+          <Link className={linkClass("/status-requests")} to="/status-requests">📋 Wnioski</Link>
         </>
       )}
+
       {token && currentRole === 'USER' && (
         <>
-          <span className="text-gray-500 cursor-not-allowed">⚙️ Admin Panel</span>
-          <span className="text-gray-500 cursor-not-allowed">📊 Raporty</span>
+          <span className="text-gray-500 cursor-not-allowed">⚙️ Panel admina</span>
+          <span className="text-gray-500 cursor-not-allowed">📋 Wnioski</span>
         </>
       )}
+
       {!token && (
-        <Link className="text-purple-400 hover:text-purple-300 transition-colors no-underline font-medium" to="/log">
-          🔐 Logowanie
-        </Link>
+        <Link className={linkClass("/log")} to="/log">🔐 Logowanie</Link>
       )}
+
       {token && (
         <button
           className="bg-red-600 hover:bg-red-500 text-white border-none py-2 px-4 rounded cursor-pointer font-medium transition-colors"

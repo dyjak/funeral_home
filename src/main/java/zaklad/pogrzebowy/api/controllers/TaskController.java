@@ -75,16 +75,20 @@ public class TaskController {
     @PutMapping("/{id}")
     public ResponseEntity<TaskDTO> updateTask(@PathVariable Long id, @RequestBody TaskDTO taskDTO) {
         try {
-            Optional<Task> existingTaskOpt = taskService.findById(id);
-            if (existingTaskOpt.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-
-            Task taskToUpdate = taskDTO.toEntity(); // Konwertuj DTO do encji
-            taskToUpdate.setId(id); // Ustaw ID z URL
-
-            Task updated = taskService.update(id, taskToUpdate);
-            return ResponseEntity.ok(new TaskDTO(updated));
+            // Log received data
+            System.out.println("Received update request for task " + id + ": " + taskDTO);
+            
+            // Convert DTO to entity
+            Task taskToUpdate = taskDTO.toEntity();
+            
+            // Update the task
+            Task updatedTask = taskService.update(id, taskToUpdate);
+            
+            // Convert back to DTO and return
+            TaskDTO responseDTO = new TaskDTO(updatedTask);
+            System.out.println("Sending response: " + responseDTO);
+            
+            return ResponseEntity.ok(responseDTO);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();

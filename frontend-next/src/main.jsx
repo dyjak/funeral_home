@@ -11,6 +11,7 @@ import "./styles/index.css";
 import TaskPlans from "./pages/TaskPlans.jsx";
 import Recepcionist from "./pages/Receptionist.jsx";
 import TaskWork from "./pages/TaskWork.jsx";
+import StatusRequests from "./pages/StatusRequests.jsx";
 
 // 🔧 Komponent z tokenem globalnym
 const Root = () => {
@@ -99,8 +100,8 @@ const Root = () => {
           element: <ProtectedTaskRoute />
         },
         {
-          path: "/raports",
-          element: userRole === 'ADMIN' ? <Raports token={token} /> : <Navigate to="/" replace />
+          path: "/status-requests",
+          element: userRole === 'ADMIN' ? <StatusRequests /> : <Navigate to="/" replace />
         },
         {
           path: "/recepcionist",

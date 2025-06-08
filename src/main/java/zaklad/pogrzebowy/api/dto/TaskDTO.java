@@ -112,22 +112,22 @@ public class TaskDTO {
 
     public Task toEntity() {
         Task task = new Task();
+        
+        // Set basic fields
         task.setId(this.id);
         task.setTaskName(this.taskName);
         task.setDescription(this.description);
         task.setDueDate(this.dueDate);
         
-        // Convert String to Priority enum
-        if (this.priority != null) {
-            task.setPriority(Task.Priority.valueOf(this.priority.toLowerCase()));
+        // Only set enums if they have valid values
+        if (this.priority != null && !this.priority.isEmpty()) {
+            task.setPriority(Task.Priority.valueOf(this.priority.toUpperCase()));
+        }
+        if (this.status != null && !this.status.isEmpty()) {
+            task.setStatus(Task.Status.valueOf(this.status.toUpperCase()));
         }
         
-        // Convert String to Status enum
-        if (this.status != null) {
-            task.setStatus(Task.Status.valueOf(this.status.toLowerCase()));
-        }
-
-        
+        // Handle relationships
         if (this.order != null) {
             Order orderEntity = new Order();
             orderEntity.setId(this.order.getId());

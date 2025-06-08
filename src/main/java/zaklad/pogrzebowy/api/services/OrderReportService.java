@@ -10,6 +10,8 @@ import zaklad.pogrzebowy.api.repositories.OrderRepository;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderReportService {
@@ -103,6 +105,99 @@ public class OrderReportService {
         }
     }
 
+    public ByteArrayInputStream generateBulkReport(List<Long> orderIds) {
+        List<Order> orders = orderIds.stream()
+            .map(id -> orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + id)))
+            .collect(Collectors.toList());
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        try {
+            Document document = new Document(PageSize.A4);
+            PdfWriter.getInstance(document, out);
+            document.open();
+
+            BaseFont baseFont = BaseFont.createFont(
+                BaseFont.HELVETICA, 
+                BaseFont.CP1250, 
+                BaseFont.EMBEDDED
+            );
+            Font titleFont = new Font(baseFont, 18, Font.BOLD);
+            Font headerFont = new Font(baseFont, 12, Font.BOLD);
+            Font contentFont = new Font(baseFont, 11, Font.NORMAL);
+
+            // Add title
+            Paragraph title = new Paragraph("Raport zbiórczy zamówień", titleFont);
+            title.setAlignment(Element.ALIGN_CENTER);
+            title.setSpacingAfter(20);
+            document.add(title);
+
+            // Add generation date
+            Paragraph dateInfo = new Paragraph(
+                "Wygenerowano: " + java.time.LocalDateTime.now()
+                    .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                contentFont
+            );
+            dateInfo.setAlignment(Element.ALIGN_RIGHT);
+            dateInfo.setSpacingAfter(20);
+            document.add(dateInfo);
+
+            for (Order order : orders) {
+                addSection(document, "Zamówienie #" + order.getId(), headerFont);
+                
+                // Order details
+                addField(document, "Status:", formatStatus(order.getStatus().toString()), contentFont);
+                addField(document, "Data zamówienia:", 
+                        order.getOrderDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")), contentFont);
+
+                // Client details
+                addSection(document, "Dane klienta", headerFont);
+                addField(document, "Imię i nazwisko:", 
+                        order.getClient().getFirstName() + " " + order.getClient().getLastName(), contentFont);
+                addField(document, "Telefon:", order.getClient().getPhone(), contentFont);
+
+                // Deceased details
+                addOrderDetails(document, order, headerFont, contentFont);
+
+                // Tasks
+                if (order.getTasks() != null && !order.getTasks().isEmpty()) {
+                    addSection(document, "Przypisane zadania", headerFont);
+                    PdfPTable table = new PdfPTable(4);
+                    table.setWidthPercentage(100);
+                    table.setSpacingBefore(10f);
+                    table.setSpacingAfter(10f);
+
+                    addTableHeader(table, "Nazwa", headerFont);
+                    addTableHeader(table, "Status", headerFont);
+                    addTableHeader(table, "Priorytet", headerFont);
+                    addTableHeader(table, "Termin", headerFont);
+
+                    order.getTasks().forEach(task -> {
+                        addTableCell(table, task.getTaskName(), contentFont);
+                        addTableCell(table, formatStatus(task.getStatus().toString()), contentFont);
+                        addTableCell(table, formatPriority(task.getPriority().toString()), contentFont);
+                        addTableCell(table, task.getDueDate() != null ? 
+                            task.getDueDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : 
+                            "Nie określono", contentFont);
+                    });
+
+                    document.add(table);
+                }
+
+                // Add page break between orders
+                if (orders.indexOf(order) < orders.size() - 1) {
+                    document.newPage();
+                }
+            }
+
+            document.close();
+            return new ByteArrayInputStream(out.toByteArray());
+        } catch (Exception e) {
+            throw new RuntimeException("Błąd podczas generowania PDF", e);
+        }
+    }
+
     private void addSection(Document document, String title, Font font) throws DocumentException {
         Paragraph section = new Paragraph(title, font);
         section.setSpacingBefore(15);
@@ -119,7 +214,7 @@ public class OrderReportService {
 
     private void addTableHeader(PdfPTable table, String text, Font font) {
         PdfPCell cell = new PdfPCell(new Phrase(text, font));
-        cell.setBackgroundColor(new BaseColor(51, 51, 51));
+        cell.setBackgroundColor(new BaseColor(211, 211, 211));
         cell.setPadding(5);
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
         table.addCell(cell);

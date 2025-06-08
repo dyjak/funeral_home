@@ -90,6 +90,37 @@ const Receptionist = () => {
     }));
   };
 
+  const generateBulkReports = async (orderIds) => {
+    setLoading(true);
+    try {
+        const token = localStorage.getItem('token');
+        
+        const response = await fetch(`http://localhost:8080/reports/orders/bulk`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(orderIds)
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to generate reports');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        window.open(url);
+        
+        setSuccess('All reports generated successfully');
+    } catch (err) {
+        console.error('Error generating reports:', err);
+        setError('Failed to generate reports');
+    } finally {
+        setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -216,6 +247,7 @@ const Receptionist = () => {
       <OrdersList 
         orders={orders}
         generateReport={generateOrderReport}
+        generateBulkReports={generateBulkReports}
         loading={loading}
       />
     </div>

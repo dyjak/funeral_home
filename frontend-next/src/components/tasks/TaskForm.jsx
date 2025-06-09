@@ -5,16 +5,11 @@ const TaskForm = ({
   handleInputChange, 
   handleAddTask, 
   orders, 
-  employees,
-  editingTask,
-  handleCancelEdit,
-  handleSaveChanges
+  employees
 }) => {
   return (
     <div className="mb-8 bg-gray-800 p-4 rounded-lg">
-      <h2 className="text-xl font-semibold mb-4">
-        {editingTask ? "Edytuj zadanie" : "Dodaj nowe zadanie"}
-      </h2>
+      <h2 className="text-xl font-semibold mb-4">Dodaj nowe zadanie</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
         <div>
           <label className="block text-gray-400 mb-1 text-sm">Nazwa zadania</label>
@@ -108,29 +103,12 @@ const TaskForm = ({
         </div>
       </div>
       <div className="flex justify-end">
-        {editingTask ? (
-          <div className="flex gap-2">
-            <button
-              onClick={handleCancelEdit}
-              className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded"
-            >
-              Anuluj
-            </button>
-            <button
-              onClick={handleSaveChanges}
-              className="bg-blue-700 hover:bg-blue-600 text-white px-6 py-2 rounded"
-            >
-              Zapisz zmiany
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={handleAddTask}
-            className="bg-green-700 hover:bg-green-600 text-white px-6 py-2 rounded"
-          >
-            Dodaj zadanie
-          </button>
-        )}
+        <button
+          onClick={handleAddTask}
+          className="bg-green-700 hover:bg-green-600 text-white px-6 py-2 rounded"
+        >
+          Dodaj zadanie
+        </button>
       </div>
     </div>
   );

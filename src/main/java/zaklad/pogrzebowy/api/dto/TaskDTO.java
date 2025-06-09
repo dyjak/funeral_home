@@ -121,10 +121,10 @@ public class TaskDTO {
         
         // Only set enums if they have valid values
         if (this.priority != null && !this.priority.isEmpty()) {
-            task.setPriority(Task.Priority.valueOf(this.priority.toUpperCase()));
+            task.setPriority(Task.Priority.valueOf(this.priority.toLowerCase()));
         }
         if (this.status != null && !this.status.isEmpty()) {
-            task.setStatus(Task.Status.valueOf(this.status.toUpperCase()));
+            task.setStatus(Task.Status.valueOf(this.status.toLowerCase()));
         }
         
         // Handle relationships

@@ -14,8 +14,8 @@ const TaskCard = ({
     dueDate: task.dueDate ? task.dueDate.substring(0, 16) : '',
     priority: task.priority,
     status: task.status,
-    orderId: task.order?.id || '',
-    employeeId: task.assignedUser?.id || ''
+    orderId: task.order?.id ? String(task.order.id) : '', // always string
+    employeeId: task.assignedUser?.id ? String(task.assignedUser.id) : '' // always string
   });
 
   const handleInputChange = (e) => {
@@ -25,9 +25,6 @@ const TaskCard = ({
 
   const handleSave = async () => {
     try {
-      console.log('Original task:', task);
-      console.log('Form data before submission:', editForm);
-
       // Transform the data to match the expected format
       const taskData = {
         id: task.id,
@@ -35,16 +32,12 @@ const TaskCard = ({
         description: editForm.description,
         priority: editForm.priority,
         status: editForm.status,
-        dueDate: editForm.dueDate ? editForm.dueDate + ":00.000Z" : null,
+        dueDate: editForm.dueDate ? editForm.dueDate + ":00" : null,
         order: editForm.orderId ? { id: parseInt(editForm.orderId) } : null,
         assignedUser: editForm.employeeId ? { id: parseInt(editForm.employeeId) } : null
       };
 
-      console.log('Transformed task data:', taskData);
-
-      // Call the parent handler
       await handleEditTask(taskData);
-      console.log('Edit successful');
       setIsEditing(false);
     } catch (err) {
       console.error('Error saving task:', err);
@@ -61,8 +54,8 @@ const TaskCard = ({
       dueDate: task.dueDate ? task.dueDate.substring(0, 16) : '',
       priority: task.priority,
       status: task.status,
-      orderId: task.order?.id || '',
-      employeeId: task.assignedUser?.id || ''
+      orderId: task.order?.id ? String(task.order.id) : '', // always string
+      employeeId: task.assignedUser?.id ? String(task.assignedUser.id) : '' // always string
     });
   };
 

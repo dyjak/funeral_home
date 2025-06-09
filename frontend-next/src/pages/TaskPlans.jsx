@@ -109,60 +109,67 @@ const TaskPlans = () => {
   };
   
   const handleAddTask = async () => {
-    const token = localStorage.getItem("token");
-  
-    try {
-        const taskData = {
-            taskName: formData.taskName,
-            description: formData.description,
-            priority: formData.priority,
-            status: formData.status,
-            dueDate: formData.dueDate,
-            order: formData.orderId ? { id: parseInt(formData.orderId) } : null,
-            assignedUser: formData.employeeId ? { id: parseInt(formData.employeeId) } : null
-        };
+  const token = localStorage.getItem("token");
 
-        console.log('Sending task data:', taskData);
-
-        const res = await fetch("http://localhost:8080/tasks", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify(taskData)
-        });
-
-        if (!res.ok) {
-            const errorText = await res.text();
-            console.error('Error response:', errorText);
-            throw new Error(`Failed to add task: ${res.status} ${errorText}`);
-        }
-
-        const newTask = await res.json();
-        console.log('New task response:', newTask);
-
-        // Fetch the complete task data after creation
-        const completeTaskRes = await fetch(`http://localhost:8080/tasks/${newTask.id}`, {
-            headers: {
-                "Authorization": `Bearer ${token}`,
-                "Accept": "application/json"
-            }
-        });
-
-        if (!completeTaskRes.ok) {
-            throw new Error('Failed to fetch complete task data');
-        }
-
-        const completeTask = await completeTaskRes.json();
-        console.log('Complete task data:', completeTask);
-
-        setTasks(prev => [...prev, completeTask]);
-        resetForm();
-    } catch (err) {
-        console.error("Error adding task:", err);
-        alert(`Error adding task: ${err.message}`);
+  try {
+    // Format dueDate to always include seconds
+    let dueDate = formData.dueDate;
+    if (dueDate && dueDate.length === 16) {
+      // "2025-06-09T16:24" -> "2025-06-09T16:24:00"
+      dueDate = dueDate + ":00";
     }
+
+    const taskData = {
+      taskName: formData.taskName,
+      description: formData.description,
+      priority: formData.priority,
+      status: formData.status,
+      dueDate: dueDate,
+      order: formData.orderId ? { id: parseInt(formData.orderId) } : null,
+      assignedUser: formData.employeeId ? { id: parseInt(formData.employeeId) } : null
+    };
+
+    console.log('Sending task data:', taskData);
+
+    const res = await fetch("http://localhost:8080/tasks", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(taskData)
+    });
+
+    if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Error response:', errorText);
+        throw new Error(`Failed to add task: ${res.status} ${errorText}`);
+    }
+
+    const newTask = await res.json();
+    console.log('New task response:', newTask);
+
+    // Fetch the complete task data after creation
+    const completeTaskRes = await fetch(`http://localhost:8080/tasks/${newTask.id}`, {
+        headers: {
+            "Authorization": `Bearer ${token}`,
+            "Accept": "application/json"
+        }
+    });
+
+    if (!completeTaskRes.ok) {
+        throw new Error('Failed to fetch complete task data');
+    }
+
+    const completeTask = await completeTaskRes.json();
+    console.log('Complete task data:', completeTask);
+
+    setTasks(prev => [...prev, completeTask]);
+    resetForm();
+  } catch (err) {
+      console.error("Error adding task:", err);
+      alert(`Error adding task: ${err.message}`);
+  }
 };
   
   
@@ -319,48 +326,48 @@ const filteredTasks = tasks.filter(task => {
   const handleEditTask = async (taskData) => {
     const token = localStorage.getItem("token");
     try {
-        console.log('Received task data for update:', taskData);
+      console.log('Received task data for update:', taskData);
 
-        const transformedData = {
-            id: taskData.id,
-            taskName: taskData.taskName,
-            description: taskData.description,
-            dueDate: taskData.dueDate,
-            priority: taskData.priority,
-            status: taskData.status,
-            order: taskData.orderId ? { id: parseInt(taskData.orderId) } : null,
-            assignedUser: taskData.employeeId ? { id: parseInt(taskData.employeeId) } : null
-        };
+      const transformedData = {
+        id: taskData.id,
+        taskName: taskData.taskName,
+        description: taskData.description,
+        dueDate: taskData.dueDate,
+        priority: taskData.priority,
+        status: taskData.status,
+        order: taskData.order ? taskData.order : (taskData.orderId ? { id: parseInt(taskData.orderId) } : null),
+        assignedUser: taskData.assignedUser ? taskData.assignedUser : (taskData.employeeId ? { id: parseInt(taskData.employeeId) } : null)
+      };
 
-        console.log('Sending to API:', transformedData);
+      console.log('Sending to API:', transformedData);
 
-        const res = await fetch(`http://localhost:8080/tasks/${taskData.id}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify(transformedData)
-        });
+      const res = await fetch(`http://localhost:8080/tasks/${taskData.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(transformedData)
+      });
 
-        console.log('Response status:', res.status);
+      console.log('Response status:', res.status);
 
-        if (!res.ok) {
-            const errorText = await res.text();
-            console.error('Error response:', errorText);
-            throw new Error(`Failed to update task: ${errorText}`);
-        }
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Error response:', errorText);
+        throw new Error(`Failed to update task: ${errorText}`);
+      }
 
-        const updatedTask = await res.json();
-        console.log('Received updated task:', updatedTask);
-        
-        setTasks(prev => prev.map(task => 
-            task.id === updatedTask.id ? updatedTask : task
-        ));
-        setEditingTask(null);
+      const updatedTask = await res.json();
+      console.log('Received updated task:', updatedTask);
+
+      setTasks(prev => prev.map(task =>
+        task.id === updatedTask.id ? updatedTask : task
+      ));
+      setEditingTask(null);
     } catch (err) {
-        console.error("Error updating task:", err);
-        alert(`Failed to update task: ${err.message}`);
+      console.error("Error updating task:", err);
+      alert(`Failed to update task: ${err.message}`);
     }
   };
 
@@ -384,13 +391,13 @@ const filteredTasks = tasks.filter(task => {
       {editingTask ? (
         <TaskEditForm
           task={editingTask}
-          onSubmit={handleEditTask}  // Changed from handleTaskUpdate to handleEditTask
+          onSubmit={handleEditTask}
           onCancel={handleCancelEdit}
           orders={orders}
           employees={employees}
         />
       ) : (
-        <TaskForm 
+        <TaskForm
           formData={formData}
           handleInputChange={handleInputChange}
           handleAddTask={handleAddTask}
@@ -398,8 +405,8 @@ const filteredTasks = tasks.filter(task => {
           employees={employees}
         />
       )}
-      
-      <TaskFilters 
+
+      <TaskFilters
         filters={{
           filterName,
           filterOrderId,
@@ -423,10 +430,11 @@ const filteredTasks = tasks.filter(task => {
         orders={orders}
         employees={employees}
       />
-      
-      <TaskList 
+
+      <TaskList
         tasks={filteredTasks}
-        handleEditTask={(task) => setEditingTask(task)}
+        handleEditTask={handleEditTask} // <-- pass the API update handler for inline edits
+        handleEditClick={handleEditClick} // <-- pass this only if you want to trigger full-page edit
         handleDeleteTask={handleDeleteTask}
         orders={orders}
         employees={employees}

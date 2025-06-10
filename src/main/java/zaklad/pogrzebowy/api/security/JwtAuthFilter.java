@@ -17,15 +17,46 @@ import zaklad.pogrzebowy.api.repositories.UserRepository;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Filtr uwierzytelniania JWT (JSON Web Token) dla aplikacji zakładu pogrzebowego.
+ * Odpowiada za przechwytywanie żądań HTTP i weryfikację tokenów JWT w nagłówkach autoryzacji.
+ * 
+ * <p>Filtr wykonuje następujące zadania:</p>
+ * <ul>
+ *   <li>Wyodrębnia token JWT z nagłówka Authorization</li>
+ *   <li>Weryfikuje token i wyodrębnia email użytkownika</li>
+ *   <li>Ładuje dane użytkownika z bazy danych</li>
+ *   <li>Ustawia kontekst bezpieczeństwa Spring Security</li>
+ * </ul>
+ *
+ * @author INF_CZARNI
+ * @version 1.0
+ */
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
+    /**
+     * Narzędzie do obsługi tokenów JWT.
+     */
     @Autowired
     private JwtUtil jwtUtil;
 
+    /**
+     * Repozytorium do operacji na danych użytkowników.
+     */
     @Autowired
     private UserRepository userRepository;
 
+    /**
+     * Główna metoda filtrująca żądania HTTP.
+     * Przetwarza nagłówek Authorization, weryfikuje token JWT i ustawia kontekst bezpieczeństwa.
+     *
+     * @param request     Żądanie HTTP
+     * @param response    Odpowiedź HTTP
+     * @param filterChain Łańcuch filtrów do dalszego przetwarzania
+     * @throws ServletException W przypadku błędu przetwarzania żądania
+     * @throws IOException      W przypadku błędu wejścia/wyjścia
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,

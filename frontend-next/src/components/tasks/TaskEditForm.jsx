@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useAlert, AlertType } from '../../contexts/AlertContext';
 
 const TaskEditForm = ({ task, onSubmit, onCancel, orders, employees }) => {
+  const { addAlert } = useAlert();
   const [formData, setFormData] = useState({
     taskName: '',
     description: '',
@@ -10,6 +12,10 @@ const TaskEditForm = ({ task, onSubmit, onCancel, orders, employees }) => {
     orderId: '',
     employeeId: ''
   });
+
+  // Get current date-time in ISO format for min attribute
+  const now = new Date();
+  const minDateTime = now.toISOString().slice(0, 16);
 
   useEffect(() => {
     if (task) {
@@ -34,7 +40,20 @@ const TaskEditForm = ({ task, onSubmit, onCancel, orders, employees }) => {
   };
 
   const handleSave = () => {
-    onSubmit({ ...task, ...formData });
+    try {
+      // Validate due date if one is set
+      if (formData.dueDate) {
+        const selectedDate = new Date(formData.dueDate);
+        if (selectedDate < now) {
+          addAlert(AlertType.ERROR, "Nie można ustawić terminu w przeszłości");
+          return;
+        }
+      }
+
+      onSubmit({ ...task, ...formData });
+    } catch (err) {
+      addAlert(AlertType.ERROR, `Błąd podczas edycji zadania: ${err.message}`);
+    }
   };
 
   return (
@@ -69,6 +88,7 @@ const TaskEditForm = ({ task, onSubmit, onCancel, orders, employees }) => {
             name="dueDate"
             value={formData.dueDate}
             onChange={handleInputChange}
+            min={minDateTime}
           />
         </div>
         <div>

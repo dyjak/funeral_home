@@ -25,7 +25,7 @@ const TaskProgress = ({ task }) => {
                 />
             </div>
             <p className="text-xs text-gray-400 mt-1">
-                Pozostały czas: {calculateProgress(task)}%
+                Czas: {calculateProgress(task)}%
             </p>
         </div>
     );

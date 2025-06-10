@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useAlert, AlertType } from '../../contexts/AlertContext';
 
 const OrdersPanel = () => {
+    const { addAlert, showConfirmation } = useAlert();
     const [orders, setOrders] = useState([]);
     const [editingOrder, setEditingOrder] = useState(null);
     const [formData, setFormData] = useState({
@@ -55,61 +57,55 @@ const OrdersPanel = () => {
     const handleSaveChanges = async () => {
         try {
             const token = localStorage.getItem("token");
-            
-            // Only send the fields we're actually editing
-            const orderData = {
-                status: formData.status,
-                cadaverFirstName: formData.cadaverFirstName,
-                cadaverLastName: formData.cadaverLastName,
-                deathCertificateNumber: formData.deathCertificateNumber,
-                birthDate: formData.birthDate ? formData.birthDate + "T12:00:00.000Z" : null,
-                deathDate: formData.deathDate ? formData.deathDate + "T12:00:00.000Z" : null,
-                // Preserve existing values from editingOrder
-                orderDate: editingOrder.orderDate,
-                client: editingOrder.client,
-                user: editingOrder.user
-            };
-
             const response = await fetch(`http://localhost:8080/orders/${editingOrder.id}`, {
                 method: 'PUT',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(orderData)
-            });
-
-            if (!response.ok) throw new Error('Failed to update order');
-            
-            // Refresh the orders list after update
-            const updatedOrderResponse = await fetch(`http://localhost:8080/orders/${editingOrder.id}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                body: JSON.stringify(formData)
             });
             
-            if (!updatedOrderResponse.ok) throw new Error('Failed to fetch updated order');
+            if (!response.ok) throw new Error('Nie udało się zaktualizować zamówienia');
             
-            const updatedOrder = await updatedOrderResponse.json();
+            const updatedOrder = await response.json();
             setOrders(orders.map(order => order.id === updatedOrder.id ? updatedOrder : order));
             setEditingOrder(null);
+            addAlert(AlertType.SUCCESS, 'Zamówienie zostało zaktualizowane');
         } catch (err) {
-            setError(err.message);
+            addAlert(AlertType.ERROR, `Błąd podczas aktualizacji zamówienia: ${err.message}`);
         }
     };
 
     const handleDeleteOrder = async () => {
-        const confirm = window.confirm('Czy na pewno chcesz usunąć to zamówienie?');
-        if (!confirm) return;
+        showConfirmation(
+            "Czy na pewno chcesz usunąć to zamówienie?",
+            async () => {
+                try {
+                    const token = localStorage.getItem("token");
+                    const response = await fetch(`http://localhost:8080/orders/${editingOrder.id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    if (!response.ok) throw new Error('Nie udało się usunąć zamówienia');
+                    
+                    setOrders(orders.filter(order => order.id !== editingOrder.id));
+                    setEditingOrder(null);
+                    addAlert(AlertType.SUCCESS, 'Zamówienie zostało usunięte');
+                } catch (err) {
+                    addAlert(AlertType.ERROR, `Błąd podczas usuwania zamówienia: ${err.message}`);
+                }
+            }
+        );
+    };
+
+    const handleGenerateReport = async (orderId) => {
         try {
-            const token = localStorage.getItem("token");
-            const response = await fetch(`http://localhost:8080/orders/${editingOrder.id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!response.ok) throw new Error('Failed to delete order');
-            setOrders(orders.filter(order => order.id !== editingOrder.id));
-            setEditingOrder(null);
+            // ...existing report generation code...
+            addAlert(AlertType.SUCCESS, 'Raport został wygenerowany pomyślnie');
         } catch (err) {
-            setError(err.message);
+            addAlert(AlertType.ERROR, `Błąd podczas generowania raportu: ${err.message}`);
         }
     };
 

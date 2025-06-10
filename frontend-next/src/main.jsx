@@ -1,6 +1,8 @@
 import { StrictMode, useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
+import { AlertProvider } from './contexts/AlertContext';
+import AlertContainer from './components/common/AlertContainer';
 import App from "./pages/App.jsx";
 import Profile from "./pages/Profile.jsx";
 import Raports from "./pages/Raports.jsx";
@@ -123,11 +125,16 @@ const Root = () => {
     return <div>Loading...</div>;
   }
 
-  return <RouterProvider router={router} />;
+  return (
+    <AlertProvider>
+      <AlertContainer />
+      <RouterProvider router={router} />
+    </AlertProvider>
+  );
 };
 
 createRoot(document.getElementById("root")).render(
-    <StrictMode>
-      <Root />
-    </StrictMode>
+  <StrictMode>
+    <Root />
+  </StrictMode>
 );

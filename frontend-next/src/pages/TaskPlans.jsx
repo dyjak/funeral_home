@@ -162,13 +162,12 @@ const TaskPlans = () => {
     }
 
     const completeTask = await completeTaskRes.json();
-    console.log('Complete task data:', completeTask);
-
     setTasks(prev => [...prev, completeTask]);
     resetForm();
+    return true; // Return true on success for the alert
   } catch (err) {
-      console.error("Error adding task:", err);
-      alert(`Error adding task: ${err.message}`);
+    console.error("Error adding task:", err);
+    throw err; // Propagate error for the alert
   }
 };
   
@@ -365,9 +364,10 @@ const filteredTasks = tasks.filter(task => {
         task.id === updatedTask.id ? updatedTask : task
       ));
       setEditingTask(null);
+      return true; // Return true on success for the alert
     } catch (err) {
       console.error("Error updating task:", err);
-      alert(`Failed to update task: ${err.message}`);
+      throw err; // Propagate error for the alert
     }
   };
 

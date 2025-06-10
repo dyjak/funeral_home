@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useAlert, AlertType } from '../contexts/AlertContext';
 import TaskCard from '../components/worker/TaskCard';
 import TaskList from '../components/worker/TaskList';
 
 const TaskWork = () => {
+    const { addAlert } = useAlert();
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -36,6 +38,7 @@ const TaskWork = () => {
         } catch (err) {
             console.error('Error fetching tasks:', err);
             setError(err.message);
+            addAlert(AlertType.ERROR, `Błąd podczas pobierania zadań: ${err.message}`);
         } finally {
             setLoading(false);
         }
@@ -87,7 +90,7 @@ const TaskWork = () => {
                 requestDate: new Date().toISOString()
             };
 
-            // Get existing requests with cleanup of expired ones
+            // Save request to localStorage
             const STORAGE_KEY = 'statusChangeRequests';
             const stored = localStorage.getItem(STORAGE_KEY);
             let existingData = [];
@@ -126,11 +129,10 @@ const TaskWork = () => {
                     : task
             ));
 
-            alert('Status change request submitted successfully');
-
+            addAlert(AlertType.SUCCESS, 'Wniosek o zmianę statusu został wysłany');
         } catch (err) {
             console.error('Error submitting status change request:', err);
-            alert('Failed to submit status change request: ' + err.message);
+            addAlert(AlertType.ERROR, `Błąd podczas wysyłania wniosku: ${err.message}`);
         }
     };
 

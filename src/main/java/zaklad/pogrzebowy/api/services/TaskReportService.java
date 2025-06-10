@@ -15,12 +15,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Serwis odpowiedzialny za generowanie raportów PDF dla zadań w systemie zakładu pogrzebowego.
+ * Umożliwia generowanie raportów z filtrowaniem według różnych kryteriów.
+ *
+ * @author INF_CZARNI
+ * @version 1.0
+ */
 @Service
 public class TaskReportService {
 
+    /**
+     * Repozytorium zadań używane do pobierania danych.
+     */
     @Autowired
     private TaskRepository taskRepository;
 
+    /**
+     * Generuje raport PDF zawierający listę zadań według podanych filtrów.
+     *
+     * @param filters Mapa filtrów do zastosowania (status, priorytet, data, itp.)
+     * @return Strumień bajtów zawierający wygenerowany dokument PDF
+     * @throws RuntimeException Gdy wystąpi błąd podczas generowania PDF
+     */
     public ByteArrayInputStream generateReport(Map<String, Object> filters) {
         List<Task> tasks = getFilteredTasks(filters);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -97,6 +114,13 @@ public class TaskReportService {
         }
     }
 
+    /**
+     * Dodaje komórkę nagłówkową do tabeli PDF.
+     *
+     * @param table Tabela PDF
+     * @param content Zawartość komórki
+     * @param font Czcionka do użycia
+     */
     private void addHeaderCell(PdfPTable table, String content, Font font) {
         PdfPCell cell = new PdfPCell(new Phrase(content, font));
         cell.setBackgroundColor(new BaseColor(51, 51, 51));
@@ -106,6 +130,13 @@ public class TaskReportService {
         table.addCell(cell);
     }
 
+    /**
+     * Dodaje standardową komórkę do tabeli PDF.
+     *
+     * @param table Tabela PDF
+     * @param content Zawartość komórki
+     * @param font Czcionka do użycia
+     */
     private void addCell(PdfPTable table, String content, Font font) {
         PdfPCell cell = new PdfPCell(new Phrase(content, font));
         cell.setPadding(5);
@@ -113,6 +144,12 @@ public class TaskReportService {
         table.addCell(cell);
     }
 
+    /**
+     * Filtruje zadania według podanych kryteriów.
+     *
+     * @param filters Mapa filtrów do zastosowania
+     * @return Lista przefiltrowanych zadań
+     */
     private List<Task> getFilteredTasks(Map<String, Object> filters) {
         List<Task> allTasks = taskRepository.findAll();
 
@@ -166,6 +203,12 @@ public class TaskReportService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Formatuje status zadania na język polski.
+     *
+     * @param status Status w formie tekstowej (angielskiej)
+     * @return Przetłumaczony status w języku polskim
+     */
     private String formatStatus(String status) {
         switch (status.toLowerCase()) {
             case "pending":
@@ -181,6 +224,12 @@ public class TaskReportService {
         }
     }
 
+    /**
+     * Formatuje priorytet zadania na język polski.
+     *
+     * @param priority Priorytet w formie tekstowej (angielskiej)
+     * @return Przetłumaczony priorytet w języku polskim
+     */
     private String formatPriority(String priority) {
         switch (priority.toLowerCase()) {
             case "low":

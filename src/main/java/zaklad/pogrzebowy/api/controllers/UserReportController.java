@@ -13,6 +13,23 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
+/**
+ * Kontroler REST odpowiedzialny za generowanie raportów PDF dotyczących użytkowników.
+ *
+ * Udostępnia następujące operacje:
+ * <ul>
+ *   <li>Generowanie raportu PDF dla użytkowników na podstawie filtrów (POST /reports/users)</li>
+ *   <li>Obsługa zapytań OPTIONS dla endpointu raportów użytkowników (OPTIONS /reports/users)</li>
+ * </ul>
+ *
+ * Wstrzykiwane zależności:
+ * <ul>
+ *   <li>UserReportService – logika generowania raportów PDF dla użytkowników</li>
+ * </ul>
+ *
+ * Raporty są zwracane jako pliki PDF z odpowiednimi nagłówkami umożliwiającymi pobranie lub podgląd w przeglądarce.
+ * Kontroler umożliwia dostęp z dowolnego pochodzenia (CORS).
+ */
 @RestController
 @RequestMapping("/reports")
 @CrossOrigin(origins = "*")
@@ -21,6 +38,12 @@ public class UserReportController {
     @Autowired
     private UserReportService userReportService;
 
+    /**
+     * Generuje raport PDF dla użytkowników na podstawie przekazanych filtrów.
+     * @param request mapa zawierająca filtry do raportu
+     * @param authHeader nagłówek autoryzacyjny JWT
+     * @return plik PDF z raportem użytkowników
+     */
     @PostMapping(value = "/users", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<InputStreamResource> generateUserReport(@RequestBody Map<String, Object> request,
                                                                   @RequestHeader("Authorization") String authHeader) {
@@ -39,6 +62,11 @@ public class UserReportController {
                 .body(new InputStreamResource(bis));
     }
 
+    /**
+     * Obsługuje zapytania OPTIONS dla endpointu raportów użytkowników.
+     * Umożliwia prawidłową obsługę CORS w przypadku zapytań preflight.
+     * @return odpowiedź z dozwolonymi nagłówkami i metodami
+     */
     @RequestMapping(value = "/users", method = RequestMethod.OPTIONS)
     public ResponseEntity<?> handleOptions() {
         HttpHeaders headers = new HttpHeaders();

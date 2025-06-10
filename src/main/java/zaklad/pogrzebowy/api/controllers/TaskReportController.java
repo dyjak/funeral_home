@@ -13,6 +13,23 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
+/**
+ * Kontroler REST odpowiedzialny za generowanie raportów PDF dotyczących zadań.
+ *
+ * Udostępnia następujące operacje:
+ * <ul>
+ *   <li>Generowanie raportu PDF dla zadań na podstawie filtrów (POST /reports/tasks)</li>
+ *   <li>Obsługa zapytań OPTIONS dla endpointu raportów zadań (OPTIONS /reports/tasks)</li>
+ * </ul>
+ *
+ * Wstrzykiwane zależności:
+ * <ul>
+ *   <li>TaskReportService – logika generowania raportów PDF dla zadań</li>
+ * </ul>
+ *
+ * Raporty są zwracane jako pliki PDF z odpowiednimi nagłówkami umożliwiającymi pobranie lub podgląd w przeglądarce.
+ * Kontroler umożliwia dostęp z dowolnego pochodzenia (CORS).
+ */
 @RestController
 @RequestMapping("/reports")
 @CrossOrigin(origins = "*")
@@ -21,6 +38,12 @@ public class TaskReportController {
     @Autowired
     private TaskReportService reportService;
 
+    /**
+     * Generuje raport PDF dla zadań na podstawie przekazanych filtrów.
+     * @param request mapa zawierająca filtry do raportu
+     * @param authHeader nagłówek autoryzacyjny JWT
+     * @return plik PDF z raportem zadań
+     */
     @PostMapping(value = "/tasks", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<InputStreamResource> generateTaskReport(
             @RequestBody Map<String, Object> request,
@@ -29,7 +52,7 @@ public class TaskReportController {
         Map<String, Object> filters = (Map<String, Object>) request.get("filters");
         ByteArrayInputStream reportStream = reportService.generateReport(filters);
 
-        // Generate filename with timestamp
+        // Generowanie nazwy pliku z datą i godziną
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
         String filename = "raport_zadan_" + timestamp + ".pdf";
 
@@ -44,6 +67,11 @@ public class TaskReportController {
                 .body(new InputStreamResource(reportStream));
     }
 
+    /**
+     * Obsługuje zapytania OPTIONS dla endpointu raportów zadań.
+     * Umożliwia prawidłową obsługę CORS w przypadku zapytań preflight.
+     * @return odpowiedź z dozwolonymi nagłówkami i metodami
+     */
     @RequestMapping(value = "/tasks", method = RequestMethod.OPTIONS)
     public ResponseEntity<?> handleOptions() {
         HttpHeaders headers = new HttpHeaders();

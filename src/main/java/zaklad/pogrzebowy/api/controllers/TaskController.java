@@ -11,12 +11,32 @@ import zaklad.pogrzebowy.api.security.JwtUtil;
 import zaklad.pogrzebowy.api.services.TaskService;
 import zaklad.pogrzebowy.api.dto.TaskDTO;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Kontroler REST do zarządzania zadaniami.
+ *
+ * Udostępnia następujące operacje na zasobie zadania:
+ * <ul>
+ *   <li>Pobieranie wszystkich zadań (GET /tasks)</li>
+ *   <li>Pobieranie zadania po ID (GET /tasks/{id})</li>
+ *   <li>Pobieranie zadań po statusie (GET /tasks/status/{status})</li>
+ *   <li>Tworzenie nowego zadania (POST /tasks)</li>
+ *   <li>Aktualizacja zadania (PUT /tasks/{id})</li>
+ *   <li>Usuwanie zadania (DELETE /tasks/{id})</li>
+ *   <li>Pobieranie zadań przypisanych do zalogowanego użytkownika (GET /tasks/assigned)</li>
+ * </ul>
+ *
+ * Wstrzykiwane zależności:
+ * <ul>
+ *   <li>TaskService – logika biznesowa związana z zadaniami</li>
+ *   <li>JwtUtil – obsługa tokenów JWT</li>
+ *   <li>UserRepository – dostęp do danych użytkowników</li>
+ * </ul>
+ *
+ * Kontroler umożliwia dostęp z dowolnego pochodzenia (CORS).
+ */
 @RestController
 @RequestMapping("/tasks")
 @CrossOrigin(origins = "*")
@@ -31,6 +51,10 @@ public class TaskController {
     @Autowired
     private UserRepository userRepository;
 
+    /**
+     * Pobiera listę wszystkich zadań.
+     * @return lista zadań w postaci DTO
+     */
     @GetMapping
     public ResponseEntity<List<TaskDTO>> getAllTasks() {
         List<Task> tasks = taskService.findAll();
@@ -40,6 +64,11 @@ public class TaskController {
         return ResponseEntity.ok(taskDTOs);
     }
 
+    /**
+     * Pobiera zadanie o podanym identyfikatorze.
+     * @param id identyfikator zadania
+     * @return zadanie w postaci DTO lub 404 jeśli nie znaleziono
+     */
     @GetMapping("/{id}")
     public ResponseEntity<TaskDTO> getTaskById(@PathVariable Long id) {
         return taskService.findById(id)
@@ -47,6 +76,11 @@ public class TaskController {
             .orElse(ResponseEntity.notFound().build());
     }
 
+    /**
+     * Pobiera zadania o określonym statusie.
+     * @param status status zadania
+     * @return lista zadań o danym statusie w postaci DTO
+     */
     @GetMapping("/status/{status}")
     public ResponseEntity<List<TaskDTO>> getTasksByStatus(@PathVariable Task.Status status) {
         List<Task> tasks = taskService.findByStatus(status);
@@ -56,6 +90,11 @@ public class TaskController {
         return ResponseEntity.ok(taskDTOs);
     }
 
+    /**
+     * Tworzy nowe zadanie.
+     * @param taskDTO dane nowego zadania
+     * @return utworzone zadanie w postaci DTO lub błąd 400 w przypadku niepowodzenia
+     */
     @PostMapping
     public ResponseEntity<TaskDTO> createTask(@RequestBody TaskDTO taskDTO) {
         try {
@@ -71,7 +110,12 @@ public class TaskController {
         }
     }
 
-
+    /**
+     * Aktualizuje istniejące zadanie.
+     * @param id identyfikator zadania
+     * @param taskDTO nowe dane zadania
+     * @return zaktualizowane zadanie w postaci DTO lub błąd 400 w przypadku niepowodzenia
+     */
     @PutMapping("/{id}")
     public ResponseEntity<TaskDTO> updateTask(@PathVariable Long id, @RequestBody TaskDTO taskDTO) {
         try {
@@ -95,7 +139,11 @@ public class TaskController {
         }
     }
 
-
+    /**
+     * Usuwa zadanie o podanym identyfikatorze.
+     * @param id identyfikator zadania do usunięcia
+     * @return odpowiedź bez treści lub 404 jeśli nie znaleziono zadania
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
         try {
@@ -110,6 +158,11 @@ public class TaskController {
         }
     }
 
+    /**
+     * Pobiera zadania przypisane do zalogowanego użytkownika na podstawie tokena JWT.
+     * @param token nagłówek autoryzacyjny JWT
+     * @return lista zadań przypisanych do użytkownika w postaci DTO lub błąd 401 w przypadku braku autoryzacji
+     */
     @GetMapping("/assigned")
     public ResponseEntity<List<TaskDTO>> getAssignedTasks(@RequestHeader("Authorization") String token) {
         try {

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useAlert, AlertType } from '../contexts/AlertContext';
 
 const StatusRequests = () => {
+    const { addAlert, showConfirmation } = useAlert();
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -62,30 +64,46 @@ const StatusRequests = () => {
                     status: request.requestedStatus
                 };
 
-                const res = await fetch(`http://localhost:8080/tasks/${taskId}`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify(taskData)
-                });
+                showConfirmation(
+                    `Czy na pewno chcesz ${action === 'approve' ? 'zatwierdzić' : 'odrzucić'} ten wniosek?`,
+                    async () => {
+                        try {
+                            if (action === 'approve') {
+                                const res = await fetch(`http://localhost:8080/tasks/${taskId}`, {
+                                    method: "PUT",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                        "Authorization": `Bearer ${localStorage.getItem('token')}`
+                                    },
+                                    body: JSON.stringify(taskData)
+                                });
 
-                if (!res.ok) {
-                    const errorText = await res.text();
-                    throw new Error(`Failed to update task status: ${errorText}`);
-                }
+                                if (!res.ok) {
+                                    const errorText = await res.text();
+                                    throw new Error(`Failed to update task status: ${errorText}`);
+                                }
+                            }
+
+                            // Remove the request
+                            const updatedRequests = requests.filter(req => req.id !== requestId);
+                            setRequests(updatedRequests);
+                            saveRequests(updatedRequests);
+
+                            addAlert(
+                                AlertType.SUCCESS, 
+                                `Wniosek został ${action === 'approve' ? 'zatwierdzony' : 'odrzucony'}`
+                            );
+                        } catch (err) {
+                            addAlert(
+                                AlertType.ERROR, 
+                                `Błąd podczas ${action === 'approve' ? 'zatwierdzania' : 'odrzucania'} wniosku: ${err.message}`
+                            );
+                        }
+                    }
+                );
             }
-
-            // Remove the request
-            const updatedRequests = requests.filter(req => req.id !== requestId);
-            setRequests(updatedRequests);
-            saveRequests(updatedRequests);
-
-            alert(`Request ${action === 'approve' ? 'approved' : 'rejected'} successfully`);
         } catch (err) {
-            console.error(`Error ${action}ing request:`, err);
-            alert(err.message);
+            addAlert(AlertType.ERROR, `Wystąpił błąd: ${err.message}`);
         }
     };
 

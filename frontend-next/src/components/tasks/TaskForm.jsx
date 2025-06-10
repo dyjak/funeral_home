@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAlert, AlertType } from '../../contexts/AlertContext';
 
 const TaskForm = ({ 
   formData, 
@@ -7,6 +8,31 @@ const TaskForm = ({
   orders, 
   employees
 }) => {
+  const { addAlert } = useAlert();
+
+  // Get current date-time in ISO format for min attribute
+  const now = new Date();
+  const minDateTime = now.toISOString().slice(0, 16);
+
+  const handleSubmit = async () => {
+    try {
+      // Validate due date if one is set
+      if (formData.dueDate) {
+        const selectedDate = new Date(formData.dueDate);
+        if (selectedDate < now) {
+          addAlert(AlertType.ERROR, "Nie można ustawić terminu w przeszłości");
+          return;
+        }
+      }
+
+      await handleAddTask();
+      addAlert(AlertType.SUCCESS, "Zadanie zostało utworzone");
+    } catch (err) {
+      addAlert(AlertType.ERROR, `Błąd podczas tworzenia zadania: ${err.message}`);
+    }
+  };
+
+  // Update the date input to include min attribute
   return (
     <div className="mb-8 bg-gray-800 p-4 rounded-lg">
       <h2 className="text-xl font-semibold mb-4">Dodaj nowe zadanie</h2>
@@ -39,6 +65,7 @@ const TaskForm = ({
             name="dueDate"
             value={formData.dueDate}
             onChange={handleInputChange}
+            min={minDateTime}
           />
         </div>
         <div>
@@ -104,7 +131,7 @@ const TaskForm = ({
       </div>
       <div className="flex justify-end">
         <button
-          onClick={handleAddTask}
+          onClick={handleSubmit}
           className="bg-green-700 hover:bg-green-600 text-white px-6 py-2 rounded"
         >
           Dodaj zadanie

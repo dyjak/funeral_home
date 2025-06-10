@@ -18,22 +18,52 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Konfiguracja zabezpieczeń aplikacji zakładu pogrzebowego.
+ * Definiuje ustawienia bezpieczeństwa, w tym filtry, kodowanie haseł oraz zasady CORS.
+ *
+ * @author INF_CZARNI
+ * @version 1.0
+ */
 @Configuration
 public class SecurityConfig {
 
+    /**
+     * Dostarcza enkoder do bezpiecznego hashowania haseł.
+     *
+     * @return Instancja BCryptPasswordEncoder do kodowania haseł
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Konfiguruje i dostarcza menedżera uwierzytelniania.
+     *
+     * @param authenticationConfiguration Konfiguracja uwierzytelniania
+     * @return Skonfigurowany AuthenticationManager
+     * @throws Exception W przypadku błędu konfiguracji
+     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
+    /**
+     * Filtr uwierzytelniania JWT wstrzykiwany do konfiguracji.
+     */
     @Autowired
     private JwtAuthFilter jwtAuthFilter;
 
+    /**
+     * Konfiguruje łańcuch filtrów bezpieczeństwa.
+     * Definiuje zasady dostępu do endpointów oraz konfigurację uwierzytelniania.
+     *
+     * @param http Obiekt konfiguracji bezpieczeństwa HTTP
+     * @return Skonfigurowany SecurityFilterChain
+     * @throws Exception W przypadku błędu konfiguracji
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
@@ -55,6 +85,12 @@ public class SecurityConfig {
                 .build();
     }
 
+    /**
+     * Konfiguruje zasady CORS (Cross-Origin Resource Sharing).
+     * Określa dozwolone źródła, metody i nagłówki dla żądań międzydomenowych.
+     *
+     * @return Skonfigurowane źródło konfiguracji CORS
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

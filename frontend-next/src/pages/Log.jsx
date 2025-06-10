@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAlert, AlertType } from '../contexts/AlertContext';
 import axios from "axios";
 
 const Log = ({ setToken }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const { addAlert } = useAlert();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -37,13 +39,13 @@ const Log = ({ setToken }) => {
         
         // Then show success message and refresh
         setTimeout(() => {
-          alert("Zalogowano pomyślnie!");
+          addAlert(AlertType.SUCCESS, "Zalogowano pomyślnie!");
           window.location.reload();
         }, 100);
       }
     } catch (error) {
       console.error("Błąd logowania:", error);
-      alert("Nieprawidłowy login lub hasło!");
+      addAlert(AlertType.ERROR, "Nieprawidłowy login lub hasło!");
     }
   };
 

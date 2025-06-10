@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useAlert, AlertType } from '../contexts/AlertContext';
 import ReceptionForms from '../components/reception/ReceptionForms';
 import OrdersList from '../components/reception/OrdersList';
 
 const Receptionist = () => {
+  const { addAlert } = useAlert();
   const [formData, setFormData] = useState({
     client: {
       firstName: '',
@@ -93,39 +95,37 @@ const Receptionist = () => {
   const generateBulkReports = async (orderIds) => {
     setLoading(true);
     try {
-        const token = localStorage.getItem('token');
-        
-        const response = await fetch(`http://localhost:8080/reports/orders/bulk`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(orderIds)
-        });
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`http://localhost:8080/reports/orders/bulk`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(orderIds)
+      });
 
-        if (!response.ok) {
-            throw new Error('Failed to generate reports');
-        }
+      if (!response.ok) {
+        throw new Error('Nie udało się wygenerować raportów');
+      }
 
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        window.open(url);
-        
-        setSuccess('All reports generated successfully');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      window.open(url);
+      
+      addAlert(AlertType.SUCCESS, 'Raporty zostały wygenerowane pomyślnie');
     } catch (err) {
-        console.error('Error generating reports:', err);
-        setError('Failed to generate reports');
+      console.error('Error generating reports:', err);
+      addAlert(AlertType.ERROR, `Błąd podczas generowania raportów: ${err.message}`);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-    setSuccess(null);
     const token = localStorage.getItem('token');
 
     try {
@@ -175,7 +175,8 @@ const Receptionist = () => {
 
       if (!orderResponse.ok) throw new Error('Błąd podczas tworzenia zlecenia');
       
-      setSuccess('Zlecenie zostało pomyślnie utworzone!');
+      addAlert(AlertType.SUCCESS, 'Zlecenie zostało pomyślnie utworzone');
+      
       // Reset form
       setFormData({
         client: {
@@ -197,7 +198,7 @@ const Receptionist = () => {
       await fetchOrders();
 
     } catch (err) {
-      setError(err.message);
+      addAlert(AlertType.ERROR, `Błąd: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -216,14 +217,16 @@ const Receptionist = () => {
         }
       });
 
-      if (!response.ok) throw new Error('Failed to generate report');
+      if (!response.ok) throw new Error('Nie udało się wygenerować raportu');
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       window.open(url);
+      
+      addAlert(AlertType.SUCCESS, 'Raport został wygenerowany pomyślnie');
     } catch (err) {
       console.error('Error generating report:', err);
-      setError('Failed to generate report');
+      addAlert(AlertType.ERROR, `Błąd podczas generowania raportu: ${err.message}`);
     } finally {
       setLoading(false);
     }

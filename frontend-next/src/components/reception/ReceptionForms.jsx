@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useAlert, AlertType } from '../../contexts/AlertContext';
 
 const ReceptionForms = ({
   currentUser,
@@ -10,10 +11,68 @@ const ReceptionForms = ({
   error,
   success
 }) => {
+  const { addAlert } = useAlert();
+
+  // Name validation - only letters and spaces
+  const handleNameInput = (e) => {
+    const { name, value } = e.target;
+    // Allow only letters (including Polish characters) and spaces
+    if (value === '' || /^[A-Za-zĄąĆćĘęŁłŃńÓóŚśŹźŻż\s]*$/.test(value)) {
+      handleClientChange(e);
+    }
+  };
+
+  // Name validation for deceased person
+  const handleDeceasedNameInput = (e) => {
+    const { name, value } = e.target;
+    // Allow only letters (including Polish characters) and spaces
+    if (value === '' || /^[A-Za-zĄąĆćĘęŁłŃńÓóŚśŹźŻż\s]*$/.test(value)) {
+      handleDeceasedChange(e);
+    }
+  };
+
+  // Phone validation - only numbers, max 9 digits
+  const handlePhoneInput = (e) => {
+    const { name, value } = e.target;
+    if (value === '' || (/^\d*$/.test(value) && value.length <= 9)) {
+      handleClientChange(e);
+    }
+  };
+
+  const validateForm = () => {
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (formData.client.email && !emailRegex.test(formData.client.email)) {
+      addAlert(AlertType.ERROR, "Nieprawidłowy format adresu email");
+      return false;
+    }
+
+    // Date validation
+    if (formData.deceased.birthDate && formData.deceased.deathDate) {
+      const birthDate = new Date(formData.deceased.birthDate);
+      const deathDate = new Date(formData.deceased.deathDate);
+      
+      if (deathDate < birthDate) {
+        addAlert(AlertType.ERROR, "Data zgonu nie może być wcześniejsza niż data urodzenia");
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) {
+      return;
+    }
+    await handleSubmit(e);
+  };
+
   return (
     <div className="mb-8">
       <h2 className="text-2xl font-bold mb-6">Nowe zlecenie</h2>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleFormSubmit} className="space-y-6">
         {error && (
           <div className="p-4 bg-red-900 text-red-100 rounded-lg">
             {error}
@@ -38,7 +97,7 @@ const ReceptionForms = ({
                   type="text"
                   name="firstName"
                   value={formData.client.firstName}
-                  onChange={handleClientChange}
+                  onChange={handleNameInput}
                   className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-gray-200"
                   required
                 />
@@ -49,7 +108,7 @@ const ReceptionForms = ({
                   type="text"
                   name="lastName"
                   value={formData.client.lastName}
-                  onChange={handleClientChange}
+                  onChange={handleNameInput}
                   className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-gray-200"
                   required
                 />
@@ -60,9 +119,11 @@ const ReceptionForms = ({
                   type="tel"
                   name="phone"
                   value={formData.client.phone}
-                  onChange={handleClientChange}
+                  onChange={handlePhoneInput}
+                  pattern="[0-9]{9}"
                   className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-gray-200"
                   required
+                  placeholder="Wprowadź 9 cyfr"
                 />
               </div>
               <div>
@@ -71,7 +132,7 @@ const ReceptionForms = ({
                   type="email"
                   name="email"
                   value={formData.client.email}
-                  onChange={handleClientChange}
+                  onChange={handleClientChange} // Changed from handleEmailChange
                   className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-gray-200"
                 />
               </div>
@@ -90,7 +151,7 @@ const ReceptionForms = ({
                   type="text"
                   name="firstName"
                   value={formData.deceased.firstName}
-                  onChange={handleDeceasedChange}
+                  onChange={handleDeceasedNameInput}
                   className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-gray-200"
                   required
                 />
@@ -101,7 +162,7 @@ const ReceptionForms = ({
                   type="text"
                   name="lastName"
                   value={formData.deceased.lastName}
-                  onChange={handleDeceasedChange}
+                  onChange={handleDeceasedNameInput}
                   className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-gray-200"
                   required
                 />
@@ -115,6 +176,7 @@ const ReceptionForms = ({
                   onChange={handleDeceasedChange}
                   className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-gray-200"
                   required
+                  max={new Date().toISOString().split('T')[0]}
                 />
               </div>
               <div>
@@ -126,6 +188,7 @@ const ReceptionForms = ({
                   onChange={handleDeceasedChange}
                   className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-gray-200"
                   required
+                  max={new Date().toISOString().split('T')[0]}
                 />
               </div>
               <div>

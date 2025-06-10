@@ -13,12 +13,26 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Serwis odpowiedzialny za generowanie raportów PDF dla zamówień w zakładzie pogrzebowym.
+ * Umożliwia generowanie zarówno pojedynczych raportów dla zamówienia, jak i raportów zbiorczych.
+ *
+ * @author INF_CZARNI
+ * @version 1.0
+ */
 @Service
 public class OrderReportService {
 
     @Autowired
     private OrderRepository orderRepository;
 
+    /**
+     * Generuje raport PDF dla pojedynczego zamówienia.
+     *
+     * @param orderId Identyfikator zamówienia
+     * @return Strumień bajtów zawierający wygenerowany dokument PDF
+     * @throws RuntimeException Gdy nie znaleziono zamówienia lub wystąpił błąd podczas generowania PDF
+     */
     public ByteArrayInputStream generateReport(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
@@ -105,6 +119,13 @@ public class OrderReportService {
         }
     }
 
+    /**
+     * Generuje zbiorczy raport PDF dla wielu zamówień.
+     *
+     * @param orderIds Lista identyfikatorów zamówień
+     * @return Strumień bajtów zawierający wygenerowany dokument PDF
+     * @throws RuntimeException Gdy nie znaleziono zamówienia lub wystąpił błąd podczas generowania PDF
+     */
     public ByteArrayInputStream generateBulkReport(List<Long> orderIds) {
         List<Order> orders = orderIds.stream()
             .map(id -> orderRepository.findById(id)
@@ -198,6 +219,14 @@ public class OrderReportService {
         }
     }
 
+    /**
+     * Dodaje sekcję do dokumentu PDF.
+     *
+     * @param document Dokument PDF
+     * @param title Tytuł sekcji
+     * @param font Czcionka do użycia
+     * @throws DocumentException W przypadku błędu podczas dodawania sekcji
+     */
     private void addSection(Document document, String title, Font font) throws DocumentException {
         Paragraph section = new Paragraph(title, font);
         section.setSpacingBefore(15);
@@ -205,6 +234,15 @@ public class OrderReportService {
         document.add(section);
     }
 
+    /**
+     * Dodaje pole z etykietą i wartością do dokumentu PDF.
+     *
+     * @param document Dokument PDF
+     * @param label Etykieta pola
+     * @param value Wartość pola
+     * @param font Czcionka do użycia
+     * @throws DocumentException W przypadku błędu podczas dodawania pola
+     */
     private void addField(Document document, String label, String value, Font font) throws DocumentException {
         Paragraph field = new Paragraph(label + " " + value, font);
         field.setIndentationLeft(20);
@@ -212,6 +250,13 @@ public class OrderReportService {
         document.add(field);
     }
 
+    /**
+     * Dodaje nagłówek kolumny do tabeli PDF.
+     *
+     * @param table Tabela PDF
+     * @param text Tekst nagłówka
+     * @param font Czcionka do użycia
+     */
     private void addTableHeader(PdfPTable table, String text, Font font) {
         PdfPCell cell = new PdfPCell(new Phrase(text, font));
         cell.setBackgroundColor(new BaseColor(211, 211, 211));
@@ -220,12 +265,25 @@ public class OrderReportService {
         table.addCell(cell);
     }
 
+    /**
+     * Dodaje komórkę do tabeli PDF.
+     *
+     * @param table Tabela PDF
+     * @param text Tekst komórki
+     * @param font Czcionka do użycia
+     */
     private void addTableCell(PdfPTable table, String text, Font font) {
         PdfPCell cell = new PdfPCell(new Phrase(text, font));
         cell.setPadding(5);
         table.addCell(cell);
     }
 
+    /**
+     * Formatuje status zamówienia na język polski.
+     *
+     * @param status Status w formie tekstowej
+     * @return Przetłumaczony status
+     */
     private String formatStatus(String status) {
         switch (status.toLowerCase()) {
             case "pending": return "Oczekujące";
@@ -236,6 +294,12 @@ public class OrderReportService {
         }
     }
 
+    /**
+     * Formatuje priorytet na język polski.
+     *
+     * @param priority Priorytet w formie tekstowej
+     * @return Przetłumaczony priorytet
+     */
     private String formatPriority(String priority) {
         switch (priority.toLowerCase()) {
             case "low": return "Niski";
@@ -245,6 +309,15 @@ public class OrderReportService {
         }
     }
 
+    /**
+     * Dodaje szczegóły zamówienia do dokumentu PDF.
+     *
+     * @param document Dokument PDF
+     * @param order Zamówienie
+     * @param headerFont Czcionka nagłówków
+     * @param contentFont Czcionka treści
+     * @throws DocumentException W przypadku błędu podczas dodawania szczegółów
+     */
     private void addOrderDetails(Document document, Order order, Font headerFont, Font contentFont) throws DocumentException {
         addSection(document, "Dane osoby zmarłej", headerFont);
         addField(document, "Imię i nazwisko:", 

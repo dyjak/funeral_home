@@ -12,6 +12,26 @@ import zaklad.pogrzebowy.api.services.TaskAssignmentService;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Kontroler REST do zarządzania przypisaniami zadań do użytkowników.
+ *
+ * Udostępnia następujące operacje na zasobie przypisania zadania:
+ * <ul>
+ *   <li>Pobieranie wszystkich przypisań (GET /assignments)</li>
+ *   <li>Pobieranie przypisania po ID (GET /assignments/{id})</li>
+ *   <li>Pobieranie przypisań po ID użytkownika (GET /assignments/user/{userId})</li>
+ *   <li>Pobieranie przypisań po ID zadania (GET /assignments/task/{taskId})</li>
+ *   <li>Tworzenie nowego przypisania (POST /assignments)</li>
+ *   <li>Usuwanie przypisania (DELETE /assignments/{id})</li>
+ * </ul>
+ *
+ * Wstrzykiwane zależności:
+ * <ul>
+ *   <li>TaskAssignmentService – logika biznesowa związana z przypisaniami zadań</li>
+ * </ul>
+ *
+ * Kontroler umożliwia dostęp z dowolnego pochodzenia (CORS).
+ */
 @RestController
 @RequestMapping("/assignments")
 @CrossOrigin(origins = "*")
@@ -22,6 +42,10 @@ public class TaskAssignmentController {
     @Autowired
     private TaskAssignmentService service;
 
+    /**
+     * Pobiera listę wszystkich przypisań zadań.
+     * @return lista przypisań zadań
+     */
     @GetMapping
     public ResponseEntity<List<TaskAssignmentDTO>> getAll() {
         try {
@@ -38,6 +62,11 @@ public class TaskAssignmentController {
         }
     }
 
+    /**
+     * Pobiera przypisanie zadania po jego identyfikatorze.
+     * @param id identyfikator przypisania
+     * @return przypisanie zadania lub 404 jeśli nie znaleziono
+     */
     @GetMapping("/{id}")
     public ResponseEntity<TaskAssignmentDTO> getById(@PathVariable Long id) {
         try {
@@ -57,6 +86,11 @@ public class TaskAssignmentController {
         }
     }
 
+    /**
+     * Pobiera przypisania zadań dla danego użytkownika.
+     * @param userId identyfikator użytkownika
+     * @return lista przypisań zadań dla użytkownika
+     */
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<TaskAssignmentDTO>> getByUserId(@PathVariable Long userId) {
         try {
@@ -73,6 +107,11 @@ public class TaskAssignmentController {
         }
     }
 
+    /**
+     * Pobiera przypisania zadań dla danego zadania.
+     * @param taskId identyfikator zadania
+     * @return lista przypisań zadań dla zadania
+     */
     @GetMapping("/task/{taskId}")
     public ResponseEntity<List<TaskAssignmentDTO>> getByTaskId(@PathVariable Long taskId) {
         try {
@@ -89,6 +128,11 @@ public class TaskAssignmentController {
         }
     }
 
+    /**
+     * Tworzy nowe przypisanie zadania.
+     * @param dto dane przypisania zadania
+     * @return utworzone przypisanie zadania
+     */
     @PostMapping
     public ResponseEntity<TaskAssignmentDTO> create(@RequestBody TaskAssignmentDTO dto) {
         try {
@@ -103,6 +147,11 @@ public class TaskAssignmentController {
         }
     }
 
+    /**
+     * Usuwa przypisanie zadania o podanym identyfikatorze.
+     * @param id identyfikator przypisania do usunięcia
+     * @return odpowiedź bez treści w przypadku powodzenia
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         try {

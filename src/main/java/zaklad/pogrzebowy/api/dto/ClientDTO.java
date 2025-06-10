@@ -2,6 +2,22 @@ package zaklad.pogrzebowy.api.dto;
 
 import zaklad.pogrzebowy.api.models.Client;
 
+
+/**
+ * Data Transfer Object (DTO) dla encji Client.
+ *
+ * Służy do przesyłania podstawowych danych klienta pomiędzy warstwami aplikacji oraz do komunikacji z API.
+ *
+ * Pola:
+ * <ul>
+ *   <li>id – identyfikator klienta</li>
+ *   <li>firstName – imię klienta</li>
+ *   <li>lastName – nazwisko klienta</li>
+ *   <li>phone – numer telefonu klienta</li>
+ * </ul>
+ *
+ * Udostępnia konstruktory, gettery, settery oraz metodę konwertującą DTO na encję Client.
+ */
 public class ClientDTO {
     private Long id;
     private String firstName;

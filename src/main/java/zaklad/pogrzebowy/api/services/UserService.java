@@ -14,38 +14,91 @@ import java.util.Optional;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
 
+/**
+ * Serwis odpowiedzialny za zarządzanie użytkownikami w systemie zakładu pogrzebowego.
+ * Implementuje interfejs IUserService i obsługuje operacje CRUD na użytkownikach,
+ * wraz z bezpiecznym przechowywaniem haseł i walidacją danych.
+ *
+ * @author INF_CZARNI
+ * @version 1.0
+ */
 @Service
 public class UserService implements IUserService {
 
+    /**
+     * Repozytorium użytkowników.
+     */
     private final UserRepository repository;
+
+    /**
+     * Enkoder do bezpiecznego hashowania haseł.
+     */
     private final PasswordEncoder passwordEncoder;
+
+    /**
+     * Repozytorium przypisań zadań.
+     */
     @Autowired
     private TaskAssignmentRepository assignmentRepository;
 
+    /**
+     * Repozytorium zamówień.
+     */
     @Autowired
     private OrderRepository orderRepository;
 
+    /**
+     * Konstruktor serwisu użytkowników.
+     *
+     * @param repository Repozytorium użytkowników
+     * @param passwordEncoder Enkoder do hashowania haseł
+     */
     @Autowired
     public UserService(UserRepository repository, PasswordEncoder passwordEncoder) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
     }
 
+    /**
+     * Pobiera wszystkich użytkowników z systemu.
+     *
+     * @return Lista wszystkich użytkowników
+     */
     @Override
     public List<User> findAll() {
         return repository.findAll();
     }
 
+    /**
+     * Wyszukuje użytkownika po identyfikatorze.
+     *
+     * @param id Identyfikator użytkownika
+     * @return Optional zawierający znalezionego użytkownika lub pusty Optional
+     */
     @Override
     public Optional<User> findById(Long id) {
         return repository.findById(id);
     }
 
+    /**
+     * Wyszukuje użytkownika po adresie email.
+     *
+     * @param email Adres email użytkownika
+     * @return Optional zawierający znalezionego użytkownika lub pusty Optional
+     */
     @Override
     public Optional<User> findByEmail(String email) {
         return repository.findByEmail(email);
     }
 
+    /**
+     * Tworzy nowego użytkownika w systemie.
+     * Waliduje unikalność emaila i hasło, następnie hashuje hasło przed zapisem.
+     *
+     * @param user Nowy użytkownik do utworzenia
+     * @return Utworzony użytkownik z przypisanym identyfikatorem
+     * @throws IllegalArgumentException Gdy email już istnieje lub hasło jest puste
+     */
     @Override
     @Transactional
     public User create(User user) {
@@ -65,6 +118,16 @@ public class UserService implements IUserService {
         return repository.save(user);
     }
 
+    /**
+     * Aktualizuje istniejącego użytkownika.
+     * Sprawdza unikalność nowego emaila i aktualizuje hasło tylko jeśli zostało zmienione.
+     *
+     * @param id Identyfikator użytkownika do aktualizacji
+     * @param updatedUser Zaktualizowane dane użytkownika
+     * @return Zaktualizowany użytkownik
+     * @throws RuntimeException Gdy użytkownik nie istnieje
+     * @throws IllegalArgumentException Gdy nowy email już istnieje
+     */
     @Override
     @Transactional
     public User update(Long id, User updatedUser) {
@@ -95,6 +158,13 @@ public class UserService implements IUserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    /**
+     * Usuwa użytkownika z systemu.
+     * Usuwa również wszystkie powiązane przypisania zadań i zamówienia.
+     *
+     * @param id Identyfikator użytkownika do usunięcia
+     * @throws RuntimeException Gdy użytkownik nie istnieje
+     */
     @Override
     @Transactional
     public void delete(Long id) {

@@ -5,7 +5,8 @@ const TaskCard = ({
   handleEditTask, 
   handleDeleteTask, 
   orders, 
-  employees 
+  employees,
+  cardBgClass 
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -60,7 +61,7 @@ const TaskCard = ({
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg shadow overflow-hidden">
+    <div className={`${cardBgClass} rounded-lg shadow overflow-hidden`}>
       <div className="p-4">
         {/* Task info */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">

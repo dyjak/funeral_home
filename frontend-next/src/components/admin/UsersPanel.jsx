@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useAlert, AlertType } from '../../contexts/AlertContext';
 
 const UsersPanel = () => {
-    const { addAlert, showConfirmation } = useAlert();
     const [users, setUsers] = useState([]);
-    const [currentUser, setCurrentUser] = useState(null);
     const [editingUser, setEditingUser] = useState(null);
     const [formData, setFormData] = useState({ 
         firstName: '', 
@@ -19,7 +16,6 @@ const UsersPanel = () => {
 
     useEffect(() => {
         fetchUsers();
-        fetchCurrentUser(); // Add this
     }, []);
 
     const fetchUsers = async () => {
@@ -37,24 +33,6 @@ const UsersPanel = () => {
         } catch (err) {
             setError(err.message);
             setLoading(false);
-        }
-    };
-
-    const fetchCurrentUser = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:8080/users/me', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) throw new Error('Failed to fetch current user');
-
-            const data = await response.json();
-            setCurrentUser(data);
-        } catch (err) {
-            console.error('Error fetching current user:', err);
         }
     };
 
@@ -87,93 +65,89 @@ const UsersPanel = () => {
         setFormData({ ...formData, [name]: value });
     };
 
-    const handleSaveChanges = async () => {
-        try {
-            const token = localStorage.getItem("token");
-            const url = `http://localhost:8080/users/${isCreating ? '' : editingUser.id}`;
-            const method = isCreating ? 'POST' : 'PUT';
+   const handleSaveChanges = async () => {
+    try {
+        const token = localStorage.getItem("token");
+        const url = editingUser 
+            ? `http://localhost:8080/users/${editingUser.id}`
+            : 'http://localhost:8080/users';
 
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(formData)
-            });
+        const userToSend = {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            role: formData.role,
+            ...(formData.password && { passwordHash: formData.password })
+        };
 
-            if (!response.ok) throw new Error('Failed to save user');
+        console.log("📦 Dane wysyłane do backendu:", userToSend);
 
-            const savedUser = await response.json();
-            
-            if (isCreating) {
-                setUsers([...users, savedUser]);
-                addAlert(AlertType.SUCCESS, 'Użytkownik został pomyślnie utworzony');
-            } else {
-                setUsers(users.map(user => user.id === savedUser.id ? savedUser : user));
-                addAlert(AlertType.SUCCESS, 'Dane użytkownika zostały zaktualizowane');
-            }
-            handleCancelEdit();
-        } catch (err) {
-            addAlert(AlertType.ERROR, `Błąd: ${err.message}`);
+        const response = await fetch(url, {
+            method: editingUser ? 'PUT' : 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(userToSend)
+        });
+
+        if (!response.ok) throw new Error(`Failed to ${editingUser ? 'update' : 'create'} user`);
+
+        const updatedUser = await response.json();
+
+        if (editingUser) {
+            setUsers(users.map(user => user.id === updatedUser.id ? updatedUser : user));
+        } else {
+            setUsers([...users, updatedUser]);
         }
-    };
+
+        handleCancelEdit();
+    } catch (err) {
+        setError(err.message);
+    }
+};
+
 
     const handleImmediateDelete = async (userId) => {
-        // Prevent self-deletion
-        if (currentUser && userId === currentUser.id) {
-            addAlert(AlertType.ERROR, "Nie można usunąć własnego konta");
-            return;
-        }
+    const confirmDelete = window.confirm('Czy na pewno chcesz usunąć tego użytkownika?');
+    if (!confirmDelete) return;
 
-        const confirmDelete = window.confirm('Czy na pewno chcesz usunąć tego użytkownika?');
-        if (!confirmDelete) return;
+    try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`http://localhost:8080/users/${userId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) throw new Error('Nie udało się usunąć użytkownika.');
+
+        setUsers(users.filter(user => user.id !== userId));
+    } catch (error) {
+        alert(error.message);
+        console.error("Błąd usuwania:", error);
+    }
+};
+
+    const handleDeleteUser = async () => {
+        const confirm = window.confirm('Czy na pewno chcesz usunąć tego użytkownika?');
+        if (!confirm) return;
 
         try {
             const token = localStorage.getItem("token");
-            const response = await fetch(`http://localhost:8080/users/${userId}`, {
+            const response = await fetch(`http://localhost:8080/users/${editingUser.id}`, {
                 method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
-
-            if (!response.ok) throw new Error('Nie udało się usunąć użytkownika.');
-
-            setUsers(users.filter(user => user.id !== userId));
-        } catch (error) {
-            alert(error.message);
-            console.error("Błąd usuwania:", error);
+            
+            if (!response.ok) throw new Error('Failed to delete user');
+            
+            setUsers(users.filter(user => user.id !== editingUser.id));
+            handleCancelEdit();
+        } catch (err) {
+            setError(err.message);
         }
-    };
-
-    const handleDeleteUser = async () => {
-        // Prevent self-deletion
-        if (currentUser && editingUser && editingUser.id === currentUser.id) {
-            addAlert(AlertType.ERROR, "Nie można usunąć własnego konta");
-            return;
-        }
-
-        showConfirmation(
-            "Czy na pewno chcesz usunąć tego użytkownika?",
-            async () => {
-                try {
-                    const token = localStorage.getItem("token");
-                    const response = await fetch(`http://localhost:8080/users/${editingUser.id}`, {
-                        method: 'DELETE',
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    
-                    if (!response.ok) throw new Error('Nie udało się usunąć użytkownika');
-                    
-                    setUsers(users.filter(user => user.id !== editingUser.id));
-                    handleCancelEdit();
-                    addAlert(AlertType.SUCCESS, 'Użytkownik został usunięty');
-                } catch (err) {
-                    addAlert(AlertType.ERROR, `Błąd podczas usuwania użytkownika: ${err.message}`);
-                }
-            }
-        );
     };
 
     const handleCancelEdit = () => {

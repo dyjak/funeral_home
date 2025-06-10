@@ -12,6 +12,23 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
+/**
+ * Kontroler odpowiedzialny za obsługę uwierzytelniania użytkowników.
+ *
+ * Endpointy:
+ * <ul>
+ *   <li>POST /auth/login – uwierzytelnia użytkownika na podstawie adresu e-mail i hasła, zwraca token JWT przy poprawnych danych.</li>
+ * </ul>
+ *
+ * Wstrzykiwane zależności:
+ * <ul>
+ *   <li>UserRepository – dostęp do danych użytkowników</li>
+ *   <li>PasswordEncoder – weryfikacja hasła</li>
+ *   <li>JwtUtil – generowanie tokenów JWT</li>
+ * </ul>
+ *
+ * Kontroler umożliwia dostęp z dowolnego pochodzenia (CORS).
+ */
 @RestController
 @RequestMapping("/auth")
 @CrossOrigin(origins = "*") // 🔹 Dla React
@@ -26,6 +43,12 @@ public class AuthController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    /**
+     * Uwierzytelnia użytkownika na podstawie e-maila i hasła.
+     *
+     * @param loginUser Obiekt użytkownika zawierający e-mail i hasło (w polu passwordHash).
+     * @return Token JWT w przypadku poprawnej autoryzacji lub błąd 401 w przeciwnym razie.
+     */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody User loginUser) {
         Optional<User> user = userRepository.findByEmail(loginUser.getEmail());

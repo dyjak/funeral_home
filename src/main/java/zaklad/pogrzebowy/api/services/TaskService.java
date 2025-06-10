@@ -16,40 +16,84 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-
+/**
+ * Serwis odpowiedzialny za zarządzanie zadaniami w systemie zakładu pogrzebowego.
+ * Implementuje interfejs ITaskService i obsługuje operacje CRUD na zadaniach oraz ich powiązaniach.
+ * 
+ * @author INF_CZARNI
+ * @version 1.0
+ */
 @Service
-@Transactional 
+@Transactional
 public class TaskService implements ITaskService {
+
+    /**
+     * Repozytorium zadań.
+     */
     @Autowired
     private TaskRepository taskRepository;
     
+    /**
+     * Repozytorium zamówień.
+     */
     @Autowired
     private OrderRepository orderRepository;
     
+    /**
+     * Repozytorium użytkowników.
+     */
     @Autowired
     private UserRepository userRepository;
     
+    /**
+     * Repozytorium przypisań zadań.
+     */
     @Autowired
     private TaskAssignmentRepository taskAssignmentRepository;
 
+    /**
+     * Pobiera wszystkie zadania z systemu.
+     *
+     * @return Lista wszystkich zadań
+     */
     @Override
     @Transactional(readOnly = true)
     public List<Task> findAll() {
         return taskRepository.findAll();
     }
 
+    /**
+     * Wyszukuje zadanie po identyfikatorze.
+     *
+     * @param id Identyfikator zadania
+     * @return Optional zawierający znalezione zadanie lub pusty Optional
+     */
     @Override
     @Transactional(readOnly = true)
     public Optional<Task> findById(Long id) {
         return taskRepository.findById(id);
     }
 
+    /**
+     * Wyszukuje zadania o określonym statusie.
+     *
+     * @param status Status zadań do wyszukania
+     * @return Lista zadań o podanym statusie
+     */
     @Override
     @Transactional(readOnly = true)
     public List<Task> findByStatus(Task.Status status) {
         return taskRepository.findByStatus(status);
     }
 
+    /**
+     * Tworzy nowe zadanie w systemie.
+     * Obsługuje powiązania z zamówieniem i użytkownikiem oraz tworzy wpis o przypisaniu zadania.
+     *
+     * @param task Nowe zadanie do utworzenia
+     * @return Utworzone zadanie z przypisanym identyfikatorem
+     * @throws RuntimeException Gdy wystąpi błąd podczas tworzenia zadania
+     */
     @Override
     @Transactional
     public Task create(Task task) {
@@ -103,6 +147,15 @@ public class TaskService implements ITaskService {
         }
     }
 
+    /**
+     * Aktualizuje istniejące zadanie.
+     * Obsługuje zmianę powiązań z zamówieniem i użytkownikiem oraz aktualizuje wpisy o przypisaniu zadania.
+     *
+     * @param id Identyfikator zadania do aktualizacji
+     * @param updatedTask Zaktualizowane dane zadania
+     * @return Zaktualizowane zadanie
+     * @throws RuntimeException Gdy zadanie nie istnieje lub wystąpi błąd podczas aktualizacji
+     */
     @Override
     @Transactional
     public Task update(Long id, Task updatedTask) {
@@ -155,7 +208,14 @@ public class TaskService implements ITaskService {
         }
     }
 
-    // Helper method to handle user assignment logic
+    /**
+     * Metoda pomocnicza do obsługi przypisania użytkownika do zadania.
+     * Tworzy lub usuwa wpisy o przypisaniu zadania w zależności od przekazanych danych.
+     *
+     * @param existingTask Istniejące zadanie
+     * @param newUser Nowy użytkownik do przypisania lub null aby usunąć przypisanie
+     * @throws RuntimeException Gdy wystąpi błąd podczas obsługi przypisania
+     */
     private void handleUserAssignment(Task existingTask, User newUser) {
         try {
             if (newUser.getId() != null) {
@@ -185,6 +245,13 @@ public class TaskService implements ITaskService {
         }
     }
 
+    /**
+     * Usuwa zadanie z systemu.
+     * Czyści powiązania z użytkownikiem i zamówieniem przed usunięciem.
+     *
+     * @param id Identyfikator zadania do usunięcia
+     * @throws RuntimeException Gdy zadanie nie istnieje
+     */
     @Override
     public void delete(Long id) {
         Task task = taskRepository.findById(id)
@@ -205,6 +272,12 @@ public class TaskService implements ITaskService {
         taskRepository.deleteById(id);
     }
 
+    /**
+     * Wyszukuje zadania przypisane do określonego użytkownika.
+     *
+     * @param userId Identyfikator użytkownika
+     * @return Lista zadań przypisanych do użytkownika
+     */
     @Override
     @Transactional(readOnly = true)
     public List<Task> findTasksAssignedToUser(Long userId) {

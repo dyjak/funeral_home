@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAlert, AlertType } from '../../contexts/AlertContext'; 
 
 const TaskCard = ({ 
   task, 
@@ -8,6 +9,7 @@ const TaskCard = ({
   employees,
   cardBgClass 
 }) => {
+  const { showConfirmation, addAlert } = useAlert();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     taskName: task.taskName,
@@ -26,7 +28,6 @@ const TaskCard = ({
 
   const handleSave = async () => {
     try {
-      // Transform the data to match the expected format
       const taskData = {
         id: task.id,
         taskName: editForm.taskName,
@@ -39,10 +40,11 @@ const TaskCard = ({
       };
 
       await handleEditTask(taskData);
+      addAlert(AlertType.SUCCESS, "Zadanie zostało zaktualizowane");
       setIsEditing(false);
     } catch (err) {
       console.error('Error saving task:', err);
-      alert('Failed to save changes: ' + err.message);
+      addAlert(AlertType.ERROR, `Błąd podczas aktualizacji zadania: ${err.message}`);
     }
   };
 
@@ -58,6 +60,20 @@ const TaskCard = ({
       orderId: task.order?.id ? String(task.order.id) : '', // always string
       employeeId: task.assignedUser?.id ? String(task.assignedUser.id) : '' // always string
     });
+  };
+
+  const handleDelete = () => {
+    showConfirmation(
+      "Czy na pewno chcesz usunąć to zadanie?",
+      async () => {
+        try {
+          await handleDeleteTask(task.id);
+          addAlert(AlertType.SUCCESS, "Zadanie zostało usunięte");
+        } catch (err) {
+          addAlert(AlertType.ERROR, `Błąd podczas usuwania zadania: ${err.message}`);
+        }
+      }
+    );
   };
 
   return (
@@ -99,7 +115,7 @@ const TaskCard = ({
             </button>
             <button
               className="bg-red-700 hover:bg-red-600 text-white px-4 py-2 rounded text-sm"
-              onClick={() => handleDeleteTask(task.id)}
+              onClick={handleDelete}
             >
               Usuń
             </button>
@@ -219,6 +235,17 @@ const TaskCard = ({
       </div>
     </div>
   );
+};
+
+const TaskPlans = () => {
+    return (
+        <AlertProvider>
+            <AlertContainer />
+            <div className="container mx-auto p-4 bg-gray-900 text-gray-100">
+                {/* Your existing content */}
+            </div>
+        </AlertProvider>
+    );
 };
 
 export default TaskCard;

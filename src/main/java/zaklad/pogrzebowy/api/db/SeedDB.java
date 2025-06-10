@@ -9,6 +9,24 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Komponent odpowiedzialny za inicjalizację bazy danych przykładowymi danymi po uruchomieniu aplikacji.
+ *
+ * Wstrzykiwane zależności:
+ * <ul>
+ *   <li>ClientRepository – repozytorium klientów</li>
+ *   <li>OrderRepository – repozytorium zamówień</li>
+ *   <li>TaskRepository – repozytorium zadań</li>
+ *   <li>UserRepository – repozytorium użytkowników</li>
+ *   <li>TaskAssignmentRepository – repozytorium przypisań zadań</li>
+ *   <li>ReportRepository – repozytorium raportów</li>
+ *   <li>PasswordEncoder – enkoder haseł</li>
+ * </ul>
+ *
+ * Po uruchomieniu aplikacji, jeśli baza jest pusta, komponent tworzy przykładowych użytkowników, klientów,
+ * zamówienia, zadania, przypisania zadań oraz raporty.
+ */
+
 @Component
 public class SeedDB implements InitializingBean {
 
